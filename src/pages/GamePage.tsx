@@ -73,13 +73,13 @@ const Game: React.FC = () => {
                 <div className="flex justify-between mt-4">
                     <button
                       onClick={handlePass}
-                      className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+                      className="bg-red-500 text-black px-4 py-2 rounded-lg hover:bg-red-600"
                     >
                         Pass
                     </button>
                     <button
                       onClick={handleCorrectGuess}
-                      className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                      className="bg-green-500 text-black px-4 py-2 rounded-lg hover:bg-green-600"
                     >
                         Correct
                     </button>
