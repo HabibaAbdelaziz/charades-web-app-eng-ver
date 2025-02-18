@@ -1,9 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.tsx'
+import App from './App.tsx' //Ropt component
 import { BrowserRouter } from 'react-router-dom'
 
+// Entry point of the React app (root of the React component tree is created and connected to the HTML)
+// main.tsx is used only once to bootstrap the application
+// BrowserRouter is used to enable routing throughout the app
+// StrictMode is for highlighting potential problems in development
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
