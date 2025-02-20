@@ -18,29 +18,45 @@ const Game: React.FC = () => {
     //TODO: make sure that same word is not repeated in the same round
     const words = wordsData[normalizedCategory || ''] || [];
     const [currentIndex, setCurrentIndex] = useState(0);
-    // const [score, setScore] = useState(0);
+    const [score, setScore] = useState(0);
+    // Request permission before accessing motion data from user (required on iOS 13+). Remember if user already granted permission before or not.
+    const [permissionGranted, setPermissionGranted] = useState(
+        localStorage.getItem("motionPermission") === "granted"
+    );
+    const [showFeedback, setShowFeedback] = useState<null | "correct" | "pass">(null);
 
-    // Request permission before accessing motion data from user (required on iOS 13+). 
-    const [permissionGranted, setPermissionGranted] = useState(false);
 
+
+    // I moved the useEffect ABOVE the early return to avoid breaking hooks
     useEffect(() => {
         if(!permissionGranted) return;
 
         const handleMotion = (event: DeviceMotionEvent) => {
+            if (showFeedback) return; //prevents skipping words too fast
+
             const y = event.accelerationIncludingGravity?.y ?? 0;
             //adjust the below thresholds if needed
             if (y>8){
                 console.log("✅ Correct (Tilted Down)");
-                setCurrentIndex((prev) => (prev+1) % words.length); // move to the next word
+                setShowFeedback("correct");
+                setScore((prev) => prev+1)
+                setTimeout(() => {
+                    setShowFeedback(null);
+                    setCurrentIndex((prev) => (prev+1) % words.length); // move to the next word
+                }, 2000); // Delay displaying the next word by 2 secs and nullify ShowFeedback for next word    
             } else if (y<-8){
                 console.log("❌ Pass (Tilted Up)");
-                setCurrentIndex((prev) => (prev + 1) % words.length); // Move to next word
+                setShowFeedback("pass");
+                setTimeout(() => {
+                    setShowFeedback(null);
+                    setCurrentIndex((prev) => (prev+1) % words.length); // move to the next word
+                }, 2000); // Delay displaying the next word by 2 secs and nullify ShowFeedback for next word 
             }
         };
 
         window.addEventListener("devicemotion", handleMotion);
         return () => window.removeEventListener("devicemotion", handleMotion);
-    }, [permissionGranted, words.length]);
+    }, [permissionGranted, words.length, showFeedback]);
 
     // If no words found, show error and navigate back to home
     if (!words.length){
@@ -57,11 +73,9 @@ const Game: React.FC = () => {
         )
     }
 
+
     //get the current word and image
     const currentWord = words[currentIndex];
-
-
-
 
     const requestPermission = async () => {
         if (
@@ -72,6 +86,7 @@ const Game: React.FC = () => {
                 const permission = await (DeviceMotionEvent as unknown as {requestPermission: () => Promise<string>}).requestPermission();
                 if (permission === "granted"){
                     setPermissionGranted(true);
+                    localStorage.setItem("motionPermission", "granted"); // remember permission
                 }else{
                     alert("Motion permission denied.");
                 }
@@ -81,6 +96,7 @@ const Game: React.FC = () => {
         }else {
             //non-ios devices do not need permission
             setPermissionGranted(true);
+            localStorage.setItem("motionPermission", "granted")
         }
     };
 
@@ -93,6 +109,14 @@ const Game: React.FC = () => {
                 >
                     Enable Motion Controls
                 </button>
+            ) : showFeedback? (
+                // show pass or correct feedback
+                <div className="text-center">
+                    <h1 className="text-4xl font-bold">
+                        {showFeedback === "correct" ?  "✅ Correct!" : "❌ Passed!"}
+                    </h1>
+                    <p className="text-gray-600 mt-2">Next word in 2 seconds....</p>
+                </div>
             ) : (
                 <>
                     <h1 className="text-3xl font-bold mb-4">{currentWord.word}</h1>
@@ -104,6 +128,7 @@ const Game: React.FC = () => {
                         />
                     )}
                     <p className="text-gray-600">Tilt **down** for ✅, **up** for ❌</p>
+                    <p className="mt-4 text-lg font-semibold">Score: {score}</p>
                 </>
             )}
         </div>
