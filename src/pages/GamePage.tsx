@@ -9,11 +9,12 @@ import { wordsData } from '../data/words';
 // TODO: Design nice icons/ banners for each category
 const Game: React.FC = () => {
     const { category } = useParams<{category: string}>();
+    const normalizedCategory = category?.toLowerCase() || ''; // Normalize to lowercase
     const navigate = useNavigate();
 
     //get words for the selected category
     //TODO: make sure that same word is not repeated in the same round
-    const words = wordsData[category || ''] || [];
+    const words = wordsData[normalizedCategory || ''] || [];
     const [currentIndex, setCurrentIndex] = useState(0);
     const [score, setScore] = useState(0);
 
