@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { wordsData } from '../data/words';
 
@@ -24,39 +24,64 @@ const Game: React.FC = () => {
         localStorage.getItem("motionPermission") === "granted"
     );
     const [showFeedback, setShowFeedback] = useState<null | "correct" | "pass">(null);
+    const [isProcessingMotion, setIsProcessingMotion] = useState(false);
+    const [baselineRotation, setBaselineRotation] = useState<number | null>(null);
 
+    const handleWordChange = useCallback((isCorrect: boolean) => {
+        if (showFeedback || isProcessingMotion) return;
 
+        setIsProcessingMotion(true);
+        setShowFeedback(isCorrect ? "correct" : "pass");
+        
+        if (isCorrect) {
+            setScore((prev) => prev + 1);
+        }
 
-    // I moved the useEffect ABOVE the early return to avoid breaking hooks
+        setTimeout(() => {
+            setShowFeedback(null);
+            setCurrentIndex((prev) => (prev + 1) % words.length);
+            setIsProcessingMotion(false);
+        }, 2000);
+    }, [showFeedback, isProcessingMotion, words.length]);
+
     useEffect(() => {
-        if(!permissionGranted) return;
+        if (!permissionGranted) return;
 
-        const handleMotion = (event: DeviceMotionEvent) => {
-            if (showFeedback) return; //prevents skipping words too fast
-
-            const y = event.accelerationIncludingGravity?.y ?? 0;
-            //adjust the below thresholds if needed
-            if (y>8){
-                console.log("✅ Correct (Tilted Down)");
-                setShowFeedback("correct");
-                setScore((prev) => prev+1)
-                setTimeout(() => {
-                    setShowFeedback(null);
-                    setCurrentIndex((prev) => (prev+1) % words.length); // move to the next word
-                }, 2000); // Delay displaying the next word by 2 secs and nullify ShowFeedback for next word    
-            } else if (y<-8){
-                console.log("❌ Pass (Tilted Up)");
-                setShowFeedback("pass");
-                setTimeout(() => {
-                    setShowFeedback(null);
-                    setCurrentIndex((prev) => (prev+1) % words.length); // move to the next word
-                }, 2000); // Delay displaying the next word by 2 secs and nullify ShowFeedback for next word 
+        let lastProcessTime = 0;
+        const PROCESS_INTERVAL = 1000; // Minimum time between processing events (ms)
+        
+        const calibrateBaseline = (event: DeviceOrientationEvent) => {
+            if (baselineRotation === null && event.beta !== null) {
+                setBaselineRotation(event.beta);
             }
         };
 
-        window.addEventListener("devicemotion", handleMotion);
-        return () => window.removeEventListener("devicemotion", handleMotion);
-    }, [permissionGranted, words.length, showFeedback]);
+        const handleOrientation = (event: DeviceOrientationEvent) => {
+            if (!event.beta || baselineRotation === null) return;
+            
+            const now = Date.now();
+            if (now - lastProcessTime < PROCESS_INTERVAL) return;
+            
+            const rotation = event.beta - baselineRotation;
+            const THRESHOLD = 20; // Degrees of tilt required
+
+            if (Math.abs(rotation) > THRESHOLD) {
+                lastProcessTime = now;
+                handleWordChange(rotation > 0); // Tilting down (positive) is correct
+            }
+        };
+
+        // Set up initial calibration
+        window.addEventListener('deviceorientation', calibrateBaseline, { once: true });
+        
+        // Set up the main orientation handler
+        window.addEventListener('deviceorientation', handleOrientation);
+        
+        return () => {
+            window.removeEventListener('deviceorientation', handleOrientation);
+            window.removeEventListener('deviceorientation', calibrateBaseline);
+        };
+    }, [permissionGranted, baselineRotation, handleWordChange]);
 
     // If no words found, show error and navigate back to home
     if (!words.length){
@@ -79,24 +104,24 @@ const Game: React.FC = () => {
 
     const requestPermission = async () => {
         if (
-            typeof DeviceMotionEvent !== "undefined" &&
-            "requestPermission" in DeviceMotionEvent
-        ){
-            try{
-                const permission = await (DeviceMotionEvent as unknown as {requestPermission: () => Promise<string>}).requestPermission();
-                if (permission === "granted"){
+            typeof DeviceOrientationEvent !== "undefined" &&
+            "requestPermission" in DeviceOrientationEvent
+        ) {
+            try {
+                const permission = await (DeviceOrientationEvent as unknown as {requestPermission: () => Promise<string>}).requestPermission();
+                if (permission === "granted") {
                     setPermissionGranted(true);
-                    localStorage.setItem("motionPermission", "granted"); // remember permission
-                }else{
-                    alert("Motion permission denied.");
+                    localStorage.setItem("motionPermission", "granted");
+                } else {
+                    alert("Motion permission denied. Please enable device orientation permissions to play.");
                 }
             } catch (error) {
                 console.error("Error requesting motion permission:", error);
+                alert("Error requesting motion permission. Please ensure you're using a supported device and browser.");
             }
-        }else {
-            //non-ios devices do not need permission
+        } else {
             setPermissionGranted(true);
-            localStorage.setItem("motionPermission", "granted")
+            localStorage.setItem("motionPermission", "granted");
         }
     };
 
