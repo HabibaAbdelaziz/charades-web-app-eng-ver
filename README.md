@@ -39,7 +39,7 @@ To run this project locally:
 
 ```bash
 # Clone the repository
-git clone https://github.com/YourUsername/charades-web-app-eng-ver.git
+git clone https://github.com/HabibaAbdelaziz/charades-web-app-eng-ver.git
 
 # Install dependencies
 npm install
