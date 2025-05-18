@@ -106,8 +106,7 @@ const Game: React.FC = () => {
         )
     }
 
-    //get the current word and image
-    const currentWord = words[currentIndex];
+   
 
     const requestPermission = async () => {
         if (
