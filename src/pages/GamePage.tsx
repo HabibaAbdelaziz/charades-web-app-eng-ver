@@ -164,6 +164,7 @@ const Game: React.FC = () => {
                             <li>Keep the device steady</li>
                         </ol>
                     </div>
+                    <div>
                     {currentRotation !== null && (
                         <div className="bg-gray-800 rounded-xl p-4 mb-6">
                             <p className="text-xl mb-2">Current angle: {Math.round(currentRotation)}°</p>
@@ -174,6 +175,7 @@ const Game: React.FC = () => {
                             </p>
                         </div>
                     )}
+                    </div>
                     <button
                         onClick={finishCalibration}
                         className={`px-6 py-3 rounded-lg transition-colors duration-300 ${
