@@ -53,6 +53,7 @@ const Game: React.FC = () => {
 
     const finishCalibration = useCallback(() => {
         if (currentRotation !== null) {
+            console.log('Setting baseline rotation to:', currentRotation);
             setBaselineRotation(currentRotation);
             setIsCalibrating(false);
         }
@@ -65,11 +66,13 @@ const Game: React.FC = () => {
         const PROCESS_INTERVAL = 1000; // Minimum time between processing events (ms)
         
         const handleOrientation = (event: DeviceOrientationEvent) => {
-            if (!event.beta) return;
+            if (event.beta === null || event.beta === undefined) return;
             
+            // Update current rotation regardless of calibration state
             setCurrentRotation(event.beta);
 
-            if (isCalibrating || !baselineRotation) return;
+            // During calibration, we just want to show the current angle
+            if (isCalibrating || baselineRotation === null) return;
             
             const now = Date.now();
             if (now - lastProcessTime < PROCESS_INTERVAL) return;
@@ -79,7 +82,8 @@ const Game: React.FC = () => {
 
             if (Math.abs(rotation) > THRESHOLD) {
                 lastProcessTime = now;
-                // Changed logic: negative rotation means tilting up (pass)
+                // If rotation is positive (tilted down from baseline), it's correct
+                // If rotation is negative (tilted up from baseline), it's pass
                 handleWordChange(rotation > 0);
             }
         };
