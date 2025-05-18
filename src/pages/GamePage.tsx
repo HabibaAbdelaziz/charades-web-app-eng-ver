@@ -101,6 +101,7 @@ const Game: React.FC = () => {
             <div className='min-h-screen flex flex-col items-center justify-center'>
                 <h1 className="text-3xl font-bold">Invalid Category</h1>
                 <button
+                    type="button"
                     className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
                     onClick={() => navigate('/')}
                 >
@@ -146,6 +147,7 @@ const Game: React.FC = () => {
                         This game requires motion controls to play. Please enable motion controls to continue.
                     </p>
                     <button
+                        type="button"
                         onClick={requestPermission}
                         className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300"
                     >
@@ -176,7 +178,8 @@ const Game: React.FC = () => {
                         </div>
                     )}
                     </div>
-                    <button
+                                        <button
+                        type="button"
                         onClick={finishCalibration}
                         className={`px-6 py-3 rounded-lg transition-colors duration-300 ${
                             (!currentRotation || Math.abs(currentRotation - 90) >= 15)
@@ -222,6 +225,7 @@ const Game: React.FC = () => {
                                 </div>
                             )}
                             <button
+                                type="button"
                                 onClick={startCalibration}
                                 className="mt-4 px-4 py-2 bg-gray-700 text-gray-300 rounded-lg text-sm hover:bg-gray-600 transition-colors duration-300"
                             >
