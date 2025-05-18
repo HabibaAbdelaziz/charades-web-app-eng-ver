@@ -15,7 +15,7 @@ A modern, mobile-friendly web application for playing charades using device moti
 
 ## How to Play
 
-1. Visit the [game website](https://musical-lamington-df895d.netlify.app/) on your mobile device
+1. Visit the [game website](https://musical-lamington-df895d.netlify.app/) on your mobile device. Please use Brave browser. The web app does NOT work on Chrome.
 2. Select a word category
 3. Grant motion permissions when prompted
 4. Follow the calibration instructions to position your device
