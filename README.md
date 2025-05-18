@@ -23,6 +23,10 @@ A modern, mobile-friendly web application for playing charades using device moti
 6. Tilt the device:
    - Tilt **down** for correct guesses ✅
    - Tilt **up** to pass ❌
+  
+## Demo Video
+
+https://github.com/user-attachments/assets/cfb199ad-5c75-4f1e-8ff4-1b46ed5805c9
 
 ## Technical Details
 
