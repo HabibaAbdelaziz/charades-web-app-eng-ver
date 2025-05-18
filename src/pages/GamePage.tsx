@@ -28,6 +28,7 @@ const Game: React.FC = () => {
     const [baselineRotation, setBaselineRotation] = useState<number | null>(null);
     const [isCalibrating, setIsCalibrating] = useState(true);
     const [currentRotation, setCurrentRotation] = useState<number | null>(null);
+    const [isDeviceReady, setIsDeviceReady] = useState(false);
 
     const handleWordChange = useCallback((isCorrect: boolean) => {
         if (showFeedback || isProcessingMotion) return;
@@ -49,12 +50,14 @@ const Game: React.FC = () => {
     const startCalibration = useCallback(() => {
         setIsCalibrating(true);
         setBaselineRotation(null);
+        setIsDeviceReady(false);
     }, []);
 
     const finishCalibration = useCallback(() => {
         if (currentRotation !== null) {
             setBaselineRotation(currentRotation);
             setIsCalibrating(false);
+            setIsDeviceReady(true);
         }
     }, [currentRotation]);
 
