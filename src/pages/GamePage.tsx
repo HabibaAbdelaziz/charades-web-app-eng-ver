@@ -53,7 +53,6 @@ const Game: React.FC = () => {
 
     const finishCalibration = useCallback(() => {
         if (currentRotation !== null) {
-            console.log('Setting baseline rotation to:', currentRotation);
             setBaselineRotation(currentRotation);
             setIsCalibrating(false);
         }
@@ -66,13 +65,11 @@ const Game: React.FC = () => {
         const PROCESS_INTERVAL = 1000; // Minimum time between processing events (ms)
         
         const handleOrientation = (event: DeviceOrientationEvent) => {
-            if (event.beta === null || event.beta === undefined) return;
+            if (!event.beta) return;
             
-            // Update current rotation regardless of calibration state
             setCurrentRotation(event.beta);
 
-            // During calibration, we just want to show the current angle
-            if (isCalibrating || baselineRotation === null) return;
+            if (isCalibrating || !baselineRotation) return;
             
             const now = Date.now();
             if (now - lastProcessTime < PROCESS_INTERVAL) return;
@@ -82,8 +79,7 @@ const Game: React.FC = () => {
 
             if (Math.abs(rotation) > THRESHOLD) {
                 lastProcessTime = now;
-                // If rotation is positive (tilted down from baseline), it's correct
-                // If rotation is negative (tilted up from baseline), it's pass
+                // Changed logic: negative rotation means tilting up (pass)
                 handleWordChange(rotation > 0);
             }
         };
@@ -101,7 +97,6 @@ const Game: React.FC = () => {
             <div className='min-h-screen flex flex-col items-center justify-center'>
                 <h1 className="text-3xl font-bold">Invalid Category</h1>
                 <button
-                    type="button"
                     className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
                     onClick={() => navigate('/')}
                 >
@@ -111,7 +106,8 @@ const Game: React.FC = () => {
         )
     }
 
-
+    //get the current word and image
+    const currentWord = words[currentIndex];
 
     const requestPermission = async () => {
         if (
@@ -138,105 +134,89 @@ const Game: React.FC = () => {
         }
     };
 
-    return (
-        <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-            {!permissionGranted ? (
-                <div className="flex flex-col items-center justify-center min-h-screen p-6">
-                    <h2 className="text-2xl font-bold mb-6 text-center">Enable Motion Controls</h2>
-                    <p className="text-gray-300 mb-6 text-center max-w-md">
-                        This game requires motion controls to play. Please enable motion controls to continue.
+    const CalibrationScreen = () => (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6 text-center">
+            <h2 className="text-2xl font-bold mb-4">Device Calibration</h2>
+            <div className="mb-6">
+                <p className="text-lg mb-4">Please follow these steps:</p>
+                <ol className="text-left list-decimal pl-6 space-y-2">
+                    <li>Hold your phone vertically</li>
+                    <li>Place it against your forehead</li>
+                    <li>Screen should face outward</li>
+                    <li>Keep the device steady</li>
+                </ol>
+            </div>
+            {currentRotation !== null && (
+                <div className="mb-6">
+                    <p>Current device angle: {Math.round(currentRotation)}°</p>
+                    <p className="text-sm text-gray-600">
+                        {Math.abs(currentRotation - 90) < 15 ? "✅ Good position!" : "❌ Please adjust position"}
                     </p>
-                    <button
-                        type="button"
-                        onClick={requestPermission}
-                        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300"
-                    >
-                        Enable Motion Controls
-                    </button>
-                </div>
-            ) : isCalibrating ? (
-                <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
-                    <h2 className="text-2xl font-bold mb-6">Device Calibration</h2>
-                    <div className="bg-gray-800 rounded-xl p-6 mb-6 max-w-md w-full">
-                        <p className="text-lg mb-4">Please follow these steps:</p>
-                        <ol className="text-left list-decimal pl-6 space-y-2 text-gray-300">
-                            <li>Hold your phone vertically</li>
-                            <li>Place it against your forehead</li>
-                            <li>Screen should face outward</li>
-                            <li>Keep the device steady</li>
-                        </ol>
-                    </div>
-                    <div>
-                    {currentRotation !== null && (
-                        <div className="bg-gray-800 rounded-xl p-4 mb-6">
-                            <p className="text-xl mb-2">Current angle: {Math.round(currentRotation)}°</p>
-                            <p className="text-sm text-gray-300">
-                                {Math.abs(currentRotation - 90) < 15 ? 
-                                    "✅ Perfect position!" : 
-                                    "❌ Please adjust position"}
-                            </p>
-                        </div>
-                    )}
-                    </div>
-                                        <button
-                        type="button"
-                        onClick={finishCalibration}
-                        className={`px-6 py-3 rounded-lg transition-colors duration-300 ${
-                            (!currentRotation || Math.abs(currentRotation - 90) >= 15)
-                                ? 'bg-gray-600 cursor-not-allowed'
-                                : 'bg-blue-500 hover:bg-blue-600'
-                        }`}
-                        disabled={!currentRotation || Math.abs(currentRotation - 90) >= 15}
-                    >
-                        Start Game
-                    </button>
-                </div>
-            ) : (
-                <div className="flex flex-col items-center justify-center min-h-screen p-6">
-                    {showFeedback ? (
-                        <div className="text-center">
-                            <h1 className="text-6xl mb-4">
-                                {showFeedback === "correct" ? "✅" : "❌"}
-                            </h1>
-                            <h2 className="text-3xl font-bold mb-2">
-                                {showFeedback === "correct" ? "Correct!" : "Passed!"}
-                            </h2>
-                            <p className="text-gray-300">Next word in 2 seconds...</p>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="bg-gray-800 rounded-xl p-8 mb-6 w-full max-w-md text-center">
-                                <h1 className="text-3xl font-bold mb-4">{words[currentIndex].word}</h1>
-                                {words[currentIndex].image && (
-                                    <img 
-                                        src={words[currentIndex].image}
-                                        alt={`Image for ${words[currentIndex].word}`}
-                                        className="w-40 h-40 object-contain mx-auto mb-4 rounded-lg"
-                                    />
-                                )}
-                            </div>
-                            <div className="text-center mb-6">
-                                <p className="text-gray-300 mb-2">Tilt <strong>down</strong> for ✅, <strong>up</strong> for ❌</p>
-                                <p className="text-2xl font-semibold">Score: {score}</p>
-                            </div>
-                            {currentRotation !== null && baselineRotation !== null && (
-                                <div className="text-sm text-gray-400">
-                                    Tilt: {Math.round(currentRotation - baselineRotation)}°
-                                </div>
-                            )}
-                            <button
-                                type="button"
-                                onClick={startCalibration}
-                                className="mt-4 px-4 py-2 bg-gray-700 text-gray-300 rounded-lg text-sm hover:bg-gray-600 transition-colors duration-300"
-                            >
-                                Recalibrate Device
-                            </button>
-                        </>
-                    )}
                 </div>
             )}
+            <button
+                onClick={finishCalibration}
+                className="px-6 py-3 bg-blue-500 text-white rounded-lg"
+                disabled={!currentRotation || Math.abs(currentRotation - 90) >= 15}
+            >
+                Start Game
+            </button>
         </div>
     );
+
+    if (!permissionGranted) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+                <button
+                    onClick={requestPermission}
+                    className="px-6 py-3 bg-blue-500 text-white rounded-lg"
+                >
+                    Enable Motion Controls
+                </button>
+            </div>
+        );
+    }
+
+    if (isCalibrating) {
+        return <CalibrationScreen />;
+    }
+
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+            {showFeedback ? (
+                <div className="text-center">
+                    <h1 className="text-4xl font-bold">
+                        {showFeedback === "correct" ? "✅ Correct!" : "❌ Passed!"}
+                    </h1>
+                    <p className="text-gray-600 mt-2">Next word in 2 seconds....</p>
+                </div>
+            ) : (
+                <>
+                    <h1 className="text-3xl font-bold mb-4">{currentWord.word}</h1>
+                    {currentWord.image && (
+                        <img 
+                            src={currentWord.image}
+                            alt={`Flag of ${currentWord.word}`}
+                            className="w-40 h-40 object-contain mb-4 border border-gray-300"
+                        />
+                    )}
+                    <p className="text-gray-600">Tilt <strong>down</strong> for ✅, <strong>up</strong> for ❌</p>
+                    <p className="mt-4 text-lg font-semibold">Score: {score}</p>
+                    {currentRotation !== null && baselineRotation !== null && (
+                        <p className="text-sm text-gray-500 mt-2">
+                            Tilt: {Math.round(currentRotation - baselineRotation)}°
+                        </p>
+                    )}
+                    <button
+                        onClick={startCalibration}
+                        className="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm"
+                    >
+                        Recalibrate Device
+                    </button>
+                </>
+            )}
+        </div>
+    )
 }
 
 export default Game;
